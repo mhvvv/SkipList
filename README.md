@@ -9,5 +9,6 @@ talk is cheap, show me your code.
 
 ## Contents:
 * [跳表](./%E8%B7%B3%E8%A1%A8)
+* [哈希表](./%E5%93%88%E5%B8%8C%E8%A1%A8)
 
 持续更新...
