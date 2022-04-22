@@ -1,10 +1,10 @@
 # Useful-Data-Structures
 
-talk is cheap, show me your code.
+**talk is cheap, show me your code.**  😎
 
-致力于实现各种经典数据结构
+致力于实现各种经典数据结构.  
 
-数据结构与算法, 是艺术, 是诗. 
+能够写出代码, 才是真正的理解
 
 
 ## Contents:
