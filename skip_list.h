@@ -11,12 +11,13 @@
 
 #define FILE_PATH "./dumpFile"
 
+/* 定义跳表结点 */
 template<typename K, typename V>
 class Node {
 private:
     K key;
     V value;
-    int level;
+    int level;  // 最高出现在第几层(几级索引)
 
 public:
     Node() = default;
@@ -28,8 +29,8 @@ public:
     void set_value(const V&);
 
     /*
-     * 表示当前节点位置的下一个节点所有层的数据，从上层切换到下层，就是数组下标-1，
-     * forwards[3]表示当前节点在第三层的下一个节点。
+     * 表示当前节点在所有层的下一个节点，从上层切换到下层，就是数组下标 -1，
+     * 比如: forward[3]表示当前节点在第三层的下一个节点。
      */
     std::vector<Node<K, V>* > forward;
 };
@@ -37,8 +38,8 @@ public:
 template<typename K, typename V>
 class SkipList {
 private:
-    int max_level;          // 最大索引级别 
-    int skip_list_level;    // 当前所处索引级别
+    int max_level;          // 可用最高层(最大索引级别) 
+    int skip_list_level;    // 当前最高索引级别
     int element_count;      // 结点数
 
     Node<K, V>* header;     // 头节点
@@ -50,7 +51,8 @@ private:
 public:
     SkipList(int);
     ~SkipList();
-    int get_random_level();
+
+    int get_random_level();   // 决定元素要插入到几级索引
     Node<K, V>* create_node(const K&, const V&, int);
     void display_list();
     bool search_element(const K&);
@@ -136,7 +138,7 @@ bool SkipList<K, V>::insert_element(const K& key, const V& val) {
 
     // key 已存在
     if(current && current->get_key() == key) {
-        error_handing("Key exists.");
+        error_handing("Key already exists.");
         mtx.unlock();
         return false;
     }
@@ -190,11 +192,11 @@ bool SkipList<K, V>::search_element(const K& key) {
 template<typename K, typename V>
 void SkipList<K, V>::display_list() {
     std::cout << "\n***** Skip List: *****\n";
-    for(int i = 0; i <= skip_list_level; ++i) {
+    for(int i = skip_list_level; i >= 0; --i) {
         Node<K, V>* t = header->forward[i];
         std::cout << "Level " << i << ": ";
         while(t) {
-            std::cout << "(" << t->get_key() << ", " << t->get_value() << ")";
+            std::cout << "(" << t->get_key() << ", " << t->get_value() << ") ";
             t = t->forward[i];
         }
         std::cout << std::endl;
@@ -223,12 +225,14 @@ bool SkipList<K, V>::delete_element(const K& key) {
             if(update[i]->forward[i] != current) break;
             update[i]->forward[i] = current->forward[i];  // update[i]->forward[i]->forward[i]
         }
+        
         // 可能会降低索引层数
         // Remove levels which have no elements
         while(skip_list_level > 0 && header->forward[skip_list_level] == nullptr) {
             --skip_list_level;
         }
         std::cout << "Successfully deleted (" << key << ", " << current->get_value() << ")" << std::endl;
+        delete current;
         --element_count;
             
         mtx.unlock();
@@ -269,7 +273,6 @@ void SkipList<K, V>::load_file() {
         
         std::cout << "load (" << *key << ", " << *value << ")" << std::endl;
         insert_element(std::stoi(*key), *value);
-        std::cout << "load (" << *key << ", " << *value << ")" << std::endl; 
     }
     file_reader.close();
 }
@@ -297,11 +300,11 @@ template<typename K, typename V>
 int SkipList<K, V>::get_random_level() {
 /*
     该 randomLevel 方法会随机生成 1~MAX_LEVEL 之间的数，且 ：
-       1/2 的概率返回 1   => No
-       1/4 的概率返回 2   => 一级索引
-       1/8 的概率返回 3 以此类推
+       1/2 的概率返回 0   => No
+       1/4 的概率返回 1   => 一级索引
+       1/8 的概率返回 2 以此类推
  */
-    int level = 1;
+    int level = 0;
     while(rand() % 2 && level < max_level) 
         ++level;
 
