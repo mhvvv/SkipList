@@ -104,6 +104,8 @@ Node 的成员
 template<typename K, typename V>
 class Node {
 
+//  没有加入前向指针
+
     K key;
     V value;
     int level;  // 最高出现在第几层(几级索引)
